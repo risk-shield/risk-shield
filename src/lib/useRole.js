@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { authStore } from "@/lib/localStore";
 
-// Role hierarchy: admin > risk_manager > viewer
 export const ROLES = {
   ADMIN: "admin",
   RISK_MANAGER: "risk_manager",
@@ -13,13 +12,13 @@ export function useRole() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    authStore.me().then(u => {
       setUser(u);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
 
-  const role = user?.role || "viewer";
+  const role = user?.role || "admin"; // default to admin in standalone mode
 
   return {
     user,

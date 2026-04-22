@@ -1,5 +1,8 @@
 import { useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { makeEntityStore } from "@/lib/localStore";
+
+const RiskStore = makeEntityStore("Risk");
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -136,7 +139,7 @@ ${rawText.slice(0, 8000)}`,
   const handleImport = async () => {
     setImporting(true);
     const toImport = extractedRisks.filter((_, i) => selected.has(i));
-    await base44.entities.Risk.bulkCreate(toImport);
+    await RiskStore.bulkCreate(toImport);
     toast({ title: `${toImport.length} risk${toImport.length !== 1 ? "s" : ""} imported successfully` });
     setImporting(false);
     setStage("done");

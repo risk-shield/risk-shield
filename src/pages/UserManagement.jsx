@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { userStore, authStore } from "@/lib/localStore";
 import { useRole } from "@/lib/useRole";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,7 @@ export default function UserManagement() {
   const { toast } = useToast();
 
   const load = () => {
-    base44.entities.User.list().then(data => {
+    userStore.list().then(data => {
       setUsers(data);
       setLoading(false);
     });
@@ -43,7 +43,7 @@ export default function UserManagement() {
   const handleInvite = async () => {
     if (!inviteEmail.trim()) return;
     setInviting(true);
-    await base44.users.inviteUser(inviteEmail.trim(), inviteRole === "admin" ? "admin" : "user");
+    await userStore.invite(inviteEmail.trim(), inviteRole);
     toast({ title: `Invitation sent to ${inviteEmail}` });
     setInviteEmail("");
     setInviting(false);
@@ -51,20 +51,19 @@ export default function UserManagement() {
   };
 
   const handleRoleChange = async (userId, newRole) => {
-    await base44.entities.User.update(userId, { role: newRole });
+    await userStore.update(userId, { role: newRole });
     toast({ title: "Role updated" });
     load();
   };
 
   const handleNotificationToggle = async (u) => {
-    await base44.entities.User.update(u.id, { notification_email: !u.notification_email });
+    await userStore.update(u.id, { notification_email: !u.notification_email });
     load();
   };
 
   const handleSendReminders = async () => {
     setSendingReminders(true);
-    const res = await base44.functions.invoke("reviewReminders", {});
-    toast({ title: res.data?.summary || "Reminders sent" });
+    toast({ title: "Review reminders sent (local mode — no emails)" });
     setSendingReminders(false);
   };
 

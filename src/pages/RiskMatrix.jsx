@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { makeEntityStore } from "@/lib/localStore";
+
+const RiskStore = makeEntityStore("Risk");
 import { getRiskRating, LIKELIHOOD_LABELS, CONSEQUENCE_LABELS, LIKELIHOOD_DESC, CONSEQUENCE_DESC } from "@/lib/riskUtils";
 import InteractiveRiskMatrix from "@/components/risks/InteractiveRiskMatrix";
 import RiskBadge from "@/components/risks/RiskBadge";
@@ -18,7 +20,7 @@ export default function RiskMatrix() {
   const [showLegend, setShowLegend] = useState(false);
 
   useEffect(() => {
-    base44.entities.Risk.list("-created_date", 500).then(r => {
+    RiskStore.list("-created_date", 500).then(r => {
       setRisks(r);
       setLoading(false);
     });

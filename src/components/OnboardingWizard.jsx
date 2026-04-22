@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { authStore } from "@/lib/localStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,11 +55,11 @@ export default function OnboardingWizard({ user, onComplete }) {
 
   const handleNext = async () => {
     if (step === 1 && department) {
-      await base44.auth.updateMe({ department });
+      await authStore.updateMe({ department });
     }
     if (isLast) {
       setSaving(true);
-      await base44.auth.updateMe({ onboarding_complete: true });
+      await authStore.updateMe({ onboarding_complete: true });
       onComplete();
     } else {
       setStep(s => s + 1);

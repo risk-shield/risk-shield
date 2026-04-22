@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { makeEntityStore } from "@/lib/localStore";
+
+const RiskAuditLogStore = makeEntityStore("RiskAuditLog");
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -77,7 +79,7 @@ export default function AuditLog() {
   const [actionFilter, setActionFilter] = useState("all");
 
   useEffect(() => {
-    base44.entities.RiskAuditLog.list("-created_date", 200).then(data => {
+    RiskAuditLogStore.list("-created_date", 200).then(data => {
       setLogs(data);
       setLoading(false);
     });

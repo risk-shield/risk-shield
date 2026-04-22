@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { makeEntityStore } from "@/lib/localStore";
+
+const RiskStore = makeEntityStore("Risk");
 import { Link } from "react-router-dom";
 import { getRiskRating, RISK_COLORS, CATEGORY_COLORS, RISK_CATEGORIES } from "@/lib/riskUtils";
 import { Shield, TrendingDown, AlertTriangle, CheckCircle2, Clock, ArrowRight, RefreshCw } from "lucide-react";
@@ -16,7 +18,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Risk.list("-created_date", 200).then(r => {
+    RiskStore.list("-created_date", 200).then(r => {
       setRisks(r);
       setLoading(false);
     });

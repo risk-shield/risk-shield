@@ -18,7 +18,7 @@ import {
 import HelpPanel from "@/components/HelpPanel";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import { useRole } from "@/lib/useRole";
-import { base44 } from "@/api/base44Client";
+import { authStore } from "@/lib/localStore";
 import { Outlet } from "react-router-dom";
 
 const navItems = [
@@ -40,7 +40,7 @@ export default function AppLayout() {
   const location = useLocation();
 
   useState(() => {
-    base44.auth.me().then(u => {
+    authStore.me().then(u => {
       setCurrentUser(u);
       if (u && !u.onboarding_complete) setShowOnboarding(true);
     }).catch(() => {});

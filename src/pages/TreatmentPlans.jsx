@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { makeEntityStore } from "@/lib/localStore";
+
+const RiskStore = makeEntityStore("Risk");
 import { getRiskRating, RISK_COLORS, RISK_CATEGORIES, TREATMENT_OPTIONS } from "@/lib/riskUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -138,7 +140,7 @@ export default function TreatmentPlans() {
 
   const load = async () => {
     setLoading(true);
-    const data = await base44.entities.Risk.list("-created_date", 500);
+    const data = await RiskStore.list("-created_date", 500);
     setRisks(data);
     setLoading(false);
   };
@@ -146,7 +148,7 @@ export default function TreatmentPlans() {
   useEffect(() => { load(); }, []);
 
   const handleStatusChange = async (id, status) => {
-    await base44.entities.Risk.update(id, { status });
+    await RiskStore.update(id, { status });
     setRisks(prev => prev.map(r => r.id === id ? { ...r, status } : r));
   };
 

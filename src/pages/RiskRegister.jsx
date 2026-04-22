@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { makeEntityStore, authStore } from "@/lib/localStore";
+
+const RiskStore = makeEntityStore("Risk");
 import { getRiskRating, RISK_COLORS, RISK_CATEGORIES, RISK_STATUSES } from "@/lib/riskUtils";
 import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronUp, X, RefreshCw } from "lucide-react";
 import AIRiskExtractor from "@/components/risks/AIRiskExtractor";
@@ -33,7 +35,7 @@ export default function RiskRegister() {
 
   const load = async () => {
     setLoading(true);
-    const data = await base44.entities.Risk.list("-created_date", 500);
+    const data = await RiskStore.list("-created_date", 500);
     setRisks(data);
     setLoading(false);
   };
@@ -60,13 +62,13 @@ export default function RiskRegister() {
 
   const handleSave = async (form) => {
     setSaving(true);
-    const user = await base44.auth.me();
+    const user = await authStore.me();
     if (editing) {
-      await base44.entities.Risk.update(editing.id, form);
+      await RiskStore.update(editing.id, form);
       await logRiskUpdated(editing, { ...editing, ...form }, user);
       toast({ title: "Risk updated" });
     } else {
-      const created = await base44.entities.Risk.create(form);
+      const created = await RiskStore.create(form);
       await logRiskCreated(created, user);
       toast({ title: "Risk added" });
     }
@@ -78,8 +80,8 @@ export default function RiskRegister() {
 
   const handleDelete = async (risk) => {
     if (!confirm("Delete this risk?")) return;
-    const user = await base44.auth.me();
-    await base44.entities.Risk.delete(risk.id);
+    const user = await authStore.me();
+    await RiskStore.delete(risk.id);
     await logRiskDeleted(risk, user);
     toast({ title: "Risk deleted" });
     load();

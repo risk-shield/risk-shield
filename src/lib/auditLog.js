@@ -1,4 +1,6 @@
-import { base44 } from "@/api/base44Client";
+import { makeEntityStore, authStore } from "@/lib/localStore";
+
+const RiskAuditLog = makeEntityStore("RiskAuditLog");
 
 const FIELD_LABELS = {
   title: "Title",
@@ -22,18 +24,24 @@ const FIELD_LABELS = {
 
 const TRACKED_FIELDS = Object.keys(FIELD_LABELS);
 
+async function getUser() {
+  return authStore.me();
+}
+
 export async function logRiskCreated(risk, user) {
-  await base44.entities.RiskAuditLog.create({
+  const u = user || await getUser();
+  await RiskAuditLog.create({
     risk_id: risk.id,
     risk_title: risk.title,
     action: "created",
-    changed_by: user?.email || "unknown",
-    changed_by_name: user?.full_name || "Unknown",
+    changed_by: u?.email || "local",
+    changed_by_name: u?.full_name || "Local User",
     changes: [],
   });
 }
 
 export async function logRiskUpdated(oldRisk, newRisk, user) {
+  const u = user || await getUser();
   const changes = [];
   TRACKED_FIELDS.forEach(field => {
     const oldVal = String(oldRisk[field] ?? "");
@@ -46,26 +54,25 @@ export async function logRiskUpdated(oldRisk, newRisk, user) {
       });
     }
   });
-
   if (changes.length === 0) return;
-
-  await base44.entities.RiskAuditLog.create({
+  await RiskAuditLog.create({
     risk_id: newRisk.id,
     risk_title: newRisk.title,
     action: "updated",
-    changed_by: user?.email || "unknown",
-    changed_by_name: user?.full_name || "Unknown",
+    changed_by: u?.email || "local",
+    changed_by_name: u?.full_name || "Local User",
     changes,
   });
 }
 
 export async function logRiskDeleted(risk, user) {
-  await base44.entities.RiskAuditLog.create({
+  const u = user || await getUser();
+  await RiskAuditLog.create({
     risk_id: risk.id,
     risk_title: risk.title,
     action: "deleted",
-    changed_by: user?.email || "unknown",
-    changed_by_name: user?.full_name || "Unknown",
+    changed_by: u?.email || "local",
+    changed_by_name: u?.full_name || "Local User",
     changes: [],
   });
 }
