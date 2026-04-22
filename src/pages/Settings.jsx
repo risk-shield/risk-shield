@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, Loader2, FileJson } from "lucide-react";
+import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, Loader2, FileJson, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const RiskStore = makeEntityStore("Risk");
@@ -17,6 +17,7 @@ export default function Settings() {
   const [importPreview, setImportPreview] = useState(null);
   const [importMode, setImportMode] = useState("replace"); // replace | merge
   const fileRef = useRef();
+  const csvFileRef = useRef();
 
   const handleExport = async () => {
     setExporting(true);
@@ -31,6 +32,118 @@ export default function Settings() {
     URL.revokeObjectURL(url);
     setExporting(false);
     toast({ title: `Exported ${risks.length} risk${risks.length !== 1 ? "s" : ""}` });
+  };
+
+  const handleExportCSV = async () => {
+    setExporting(true);
+    const risks = await RiskStore.list("-created_date", 999);
+    
+    // Define CSV headers
+    const headers = [
+      "risk_id", "title", "description", "category", "risk_owner",
+      "inherent_likelihood", "inherent_consequence", "residual_likelihood", "residual_consequence",
+      "existing_controls", "treatment_action", "treatment_option", "treatment_owner",
+      "target_date", "review_date", "status", "notes"
+    ];
+    
+    // Convert risks to CSV rows
+    const rows = risks.map(r => [
+      r.risk_id || "",
+      `"${(r.title || "").replace(/"/g, '""')}"`,
+      `"${(r.description || "").replace(/"/g, '""')}"`,
+      r.category || "",
+      r.risk_owner || "",
+      r.inherent_likelihood || "",
+      r.inherent_consequence || "",
+      r.residual_likelihood || "",
+      r.residual_consequence || "",
+      `"${(r.existing_controls || "").replace(/"/g, '""')}"`,
+      `"${(r.treatment_action || "").replace(/"/g, '""')}"`,
+      r.treatment_option || "",
+      r.treatment_owner || "",
+      r.target_date || "",
+      r.review_date || "",
+      r.status || "",
+      `"${(r.notes || "").replace(/"/g, '""')}"`
+    ]);
+    
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `riskshield_export_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setExporting(false);
+    toast({ title: `Exported ${risks.length} risk${risks.length !== 1 ? "s" : ""} to CSV` });
+  };
+
+  const parseCSV = (text) => {
+    const lines = text.split("\n").filter(l => l.trim());
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(",").map(h => h.trim());
+    const rows = [];
+    
+    let i = 1;
+    while (i < lines.length) {
+      const cells = [];
+      let cell = "";
+      let inQuotes = false;
+      const line = lines[i];
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          cells.push(cell.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
+          cell = "";
+        } else {
+          cell += char;
+        }
+      }
+      cells.push(cell.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
+      
+      if (cells.length === headers.length) {
+        const obj = {};
+        headers.forEach((h, idx) => {
+          if (cells[idx]) obj[h] = cells[idx];
+        });
+        if (obj.title) rows.push(obj);
+      }
+      i++;
+    }
+    return rows;
+  };
+
+  const handleCSVFileSelect = async (file) => {
+    if (!file) return;
+    setImporting(true);
+    const text = await file.text();
+    const risks = parseCSV(text);
+    
+    if (!risks.length) {
+      toast({ title: "No valid risks found", description: "CSV must have a header row and at least one risk." });
+      setImporting(false);
+      return;
+    }
+
+    setImportPreview({ 
+      risks: risks.map((r, i) => ({
+        ...r,
+        risk_id: r.risk_id || `R-CSV-${String(i + 1).padStart(3, "0")}`,
+        inherent_likelihood: Math.min(5, Math.max(1, Number(r.inherent_likelihood) || 3)),
+        inherent_consequence: Math.min(5, Math.max(1, Number(r.inherent_consequence) || 3)),
+        residual_likelihood: r.residual_likelihood ? Math.min(5, Math.max(1, Number(r.residual_likelihood))) : undefined,
+        residual_consequence: r.residual_consequence ? Math.min(5, Math.max(1, Number(r.residual_consequence))) : undefined,
+        status: r.status || "Identified",
+      })),
+      fileName: file.name,
+      isCSV: true
+    });
+    setImporting(false);
   };
 
   const handleFileSelect = async (file) => {
@@ -112,32 +225,67 @@ export default function Settings() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Upload a previously exported JSON backup file to restore your risks.
+              Upload a previously exported JSON or CSV file to restore or import your risks.
             </p>
-            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary hover:bg-muted/30 transition-all"
-              onClick={() => fileRef.current?.click()}>
-              <FileJson className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm font-medium text-foreground">Click to browse or drag file here</p>
-              <p className="text-xs text-muted-foreground mt-1">.json backup files</p>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={e => handleFileSelect(e.target.files?.[0])}
-                disabled={importing}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary hover:bg-muted/30 transition-all"
+                onClick={() => fileRef.current?.click()}>
+                <FileJson className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">JSON Backup</p>
+                <p className="text-xs text-muted-foreground mt-1">.json files</p>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  onChange={e => handleFileSelect(e.target.files?.[0])}
+                  disabled={importing}
+                />
+              </div>
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary hover:bg-muted/30 transition-all"
+                onClick={() => csvFileRef.current?.click()}>
+                <FileSpreadsheet className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">CSV Import</p>
+                <p className="text-xs text-muted-foreground mt-1">.csv files</p>
+                <input
+                  ref={csvFileRef}
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={e => handleCSVFileSelect(e.target.files?.[0])}
+                  disabled={importing}
+                />
+              </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Export CSV Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              Export to CSV
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Export your risk register as a CSV file for use in spreadsheets or external tools.
+            </p>
+            <Button onClick={handleExportCSV} disabled={exporting} className="gap-2">
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {exporting ? "Exporting..." : "Export as CSV"}
+            </Button>
           </CardContent>
         </Card>
 
         {/* Import Preview Dialog */}
         {importPreview && (
           <Dialog open={!!importPreview} onOpenChange={() => setImportPreview(null)}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <FileJson className="w-5 h-5" />
+                  {importPreview.isCSV ? <FileSpreadsheet className="w-5 h-5" /> : <FileJson className="w-5 h-5" />}
                   Import Preview
                 </DialogTitle>
               </DialogHeader>
@@ -148,6 +296,31 @@ export default function Settings() {
                     Found <span className="font-semibold">{importPreview.risks.length} risks</span> in {importPreview.fileName}
                   </p>
                 </div>
+
+                {importPreview.isCSV && (
+                  <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted sticky top-0">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-semibold">ID</th>
+                          <th className="px-3 py-2 text-left font-semibold">Title</th>
+                          <th className="px-3 py-2 text-left font-semibold">Category</th>
+                          <th className="px-3 py-2 text-left font-semibold">L/C</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {importPreview.risks.slice(0, 10).map((r, i) => (
+                          <tr key={i} className="hover:bg-muted/50">
+                            <td className="px-3 py-2">{r.risk_id}</td>
+                            <td className="px-3 py-2 truncate">{r.title}</td>
+                            <td className="px-3 py-2">{r.category}</td>
+                            <td className="px-3 py-2">{r.inherent_likelihood}/{r.inherent_consequence}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Import Mode</label>
