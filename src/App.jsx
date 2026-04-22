@@ -13,6 +13,7 @@ import AuditLog from '@/pages/AuditLog';
 import AgentHub from '@/pages/AgentHub';
 import UserManagement from '@/pages/UserManagement';
 import Settings from '@/pages/Settings';
+import Pricing from '@/pages/Pricing';
 
 const AuthenticatedApp = () => {
   return (
@@ -27,6 +28,7 @@ const AuthenticatedApp = () => {
         <Route path="/users" element={<UserManagement />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
+      <Route path="/pricing" element={<Pricing />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

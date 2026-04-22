@@ -1,0 +1,52 @@
+{
+  "name": "Subscription",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the subscribed user"
+    },
+    "stripe_customer_id": {
+      "type": "string",
+      "description": "Stripe customer ID"
+    },
+    "stripe_subscription_id": {
+      "type": "string",
+      "description": "Stripe subscription ID"
+    },
+    "plan_name": {
+      "type": "string",
+      "enum": [
+        "basic",
+        "professional",
+        "enterprise"
+      ],
+      "description": "Subscription plan type"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "past_due",
+        "canceled",
+        "unpaid"
+      ],
+      "description": "Subscription status from Stripe"
+    },
+    "current_period_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Current billing period end date"
+    },
+    "cancel_at_period_end": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether subscription will be canceled at period end"
+    }
+  },
+  "required": [
+    "user_email",
+    "stripe_customer_id",
+    "stripe_subscription_id"
+  ]
+}

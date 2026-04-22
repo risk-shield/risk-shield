@@ -1,0 +1,32 @@
+{
+  "name": "BetaTester",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "Email address of the beta tester"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "pending",
+        "revoked"
+      ],
+      "default": "pending",
+      "description": "Beta tester approval status"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Beta access expiration date"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Admin notes about the beta tester"
+    }
+  },
+  "required": [
+    "email"
+  ]
+}
