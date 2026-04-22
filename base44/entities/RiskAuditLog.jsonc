@@ -1,0 +1,57 @@
+{
+  "name": "RiskAuditLog",
+  "type": "object",
+  "properties": {
+    "risk_id": {
+      "type": "string",
+      "description": "ID of the risk record"
+    },
+    "risk_title": {
+      "type": "string",
+      "description": "Title of the risk at time of change"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "created",
+        "updated",
+        "deleted"
+      ],
+      "description": "Type of change"
+    },
+    "changed_by": {
+      "type": "string",
+      "description": "Email of the user who made the change"
+    },
+    "changed_by_name": {
+      "type": "string",
+      "description": "Full name of the user who made the change"
+    },
+    "changes": {
+      "type": "array",
+      "description": "List of field changes",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "old_value": {
+            "type": "string"
+          },
+          "new_value": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes about the change"
+    }
+  },
+  "required": [
+    "risk_id",
+    "action"
+  ]
+}

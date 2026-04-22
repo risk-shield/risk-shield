@@ -10,7 +10,8 @@ import {
   ChevronRight,
   Shield,
   Menu,
-  X
+  X,
+  ClipboardList
 } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
@@ -19,6 +20,7 @@ const navItems = [
   { path: "/register", label: "Risk Register", icon: ShieldAlert },
   { path: "/matrix", label: "Risk Matrix", icon: Grid3X3 },
   { path: "/treatments", label: "Treatment Plans", icon: FileText },
+  { path: "/audit", label: "Audit Log", icon: ClipboardList },
 ];
 
 export default function AppLayout() {

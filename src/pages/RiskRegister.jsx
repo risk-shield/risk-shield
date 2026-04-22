@@ -4,6 +4,7 @@ import { getRiskRating, RISK_COLORS, RISK_CATEGORIES, RISK_STATUSES } from "@/li
 import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronUp, X, RefreshCw } from "lucide-react";
 import AIRiskExtractor from "@/components/risks/AIRiskExtractor";
 import RiskReportExport from "@/components/risks/RiskReportExport";
+import { logRiskCreated, logRiskUpdated, logRiskDeleted } from "@/lib/auditLog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -57,11 +58,14 @@ export default function RiskRegister() {
 
   const handleSave = async (form) => {
     setSaving(true);
+    const user = await base44.auth.me();
     if (editing) {
       await base44.entities.Risk.update(editing.id, form);
+      await logRiskUpdated(editing, { ...editing, ...form }, user);
       toast({ title: "Risk updated" });
     } else {
-      await base44.entities.Risk.create(form);
+      const created = await base44.entities.Risk.create(form);
+      await logRiskCreated(created, user);
       toast({ title: "Risk added" });
     }
     setSaving(false);
@@ -70,9 +74,11 @@ export default function RiskRegister() {
     load();
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (risk) => {
     if (!confirm("Delete this risk?")) return;
-    await base44.entities.Risk.delete(id);
+    const user = await base44.auth.me();
+    await base44.entities.Risk.delete(risk.id);
+    await logRiskDeleted(risk, user);
     toast({ title: "Risk deleted" });
     load();
   };
@@ -198,7 +204,7 @@ export default function RiskRegister() {
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditing(r); setShowForm(true); }}>
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(r.id)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>

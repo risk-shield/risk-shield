@@ -10,6 +10,7 @@ import Dashboard from '@/pages/Dashboard';
 import RiskRegister from '@/pages/RiskRegister';
 import RiskMatrix from '@/pages/RiskMatrix';
 import TreatmentPlans from '@/pages/TreatmentPlans';
+import AuditLog from '@/pages/AuditLog';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -38,6 +39,7 @@ const AuthenticatedApp = () => {
         <Route path="/register" element={<RiskRegister />} />
         <Route path="/matrix" element={<RiskMatrix />} />
         <Route path="/treatments" element={<TreatmentPlans />} />
+        <Route path="/audit" element={<AuditLog />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
