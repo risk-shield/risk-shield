@@ -1,0 +1,134 @@
+{
+  "name": "Risk",
+  "type": "object",
+  "properties": {
+    "risk_id": {
+      "type": "string",
+      "description": "Unique risk identifier e.g. R-001"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short risk title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Full description of the risk"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Financial",
+        "Legal & Compliance",
+        "Operational",
+        "WHS & Physical",
+        "Reputational",
+        "Strategic",
+        "Market",
+        "Technology",
+        "Environmental",
+        "People & HR"
+      ],
+      "description": "Risk category"
+    },
+    "risk_owner": {
+      "type": "string",
+      "description": "Person responsible for this risk"
+    },
+    "inherent_likelihood": {
+      "type": "number",
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "description": "1=Rare, 2=Unlikely, 3=Possible, 4=Likely, 5=Almost Certain"
+    },
+    "inherent_consequence": {
+      "type": "number",
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "description": "1=Insignificant, 2=Minor, 3=Moderate, 4=Major, 5=Catastrophic"
+    },
+    "residual_likelihood": {
+      "type": "number",
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "description": "Likelihood after controls"
+    },
+    "residual_consequence": {
+      "type": "number",
+      "enum": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "description": "Consequence after controls"
+    },
+    "existing_controls": {
+      "type": "string",
+      "description": "Current controls in place"
+    },
+    "treatment_action": {
+      "type": "string",
+      "description": "Proposed treatment / mitigation actions"
+    },
+    "treatment_option": {
+      "type": "string",
+      "enum": [
+        "Avoid",
+        "Reduce",
+        "Transfer",
+        "Accept"
+      ],
+      "description": "ISO 31000 treatment option"
+    },
+    "treatment_owner": {
+      "type": "string",
+      "description": "Person responsible for treatment"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Target completion date for treatment"
+    },
+    "review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next review date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Identified",
+        "Being Treated",
+        "Monitored",
+        "Closed"
+      ],
+      "default": "Identified"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes or comments"
+    }
+  },
+  "required": [
+    "title",
+    "category",
+    "inherent_likelihood",
+    "inherent_consequence"
+  ]
+}
