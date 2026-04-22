@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LIKELIHOOD_LABELS, CONSEQUENCE_LABELS, RISK_CATEGORIES, TREATMENT_OPTIONS, RISK_STATUSES, getRiskRating } from "@/lib/riskUtils";
 import RiskBadge from "./RiskBadge";
+import RiskHistory from "./RiskHistory";
 
 const FIELDS = [
   { id: "risk_id", label: "Risk ID", type: "text", placeholder: "e.g. R-001" },
@@ -31,7 +33,14 @@ export default function RiskForm({ initial = {}, onSave, onCancel, loading }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <Tabs defaultValue="details" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="details">Details</TabsTrigger>
+        {initial.id && <TabsTrigger value="history">History</TabsTrigger>}
+      </TabsList>
+
+      <TabsContent value="details">
+        <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Info */}
       <div>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Risk Details</h3>
@@ -183,12 +192,20 @@ export default function RiskForm({ initial = {}, onSave, onCancel, loading }) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 pt-2 border-t border-border">
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? "Saving..." : "Save Risk"}
-        </Button>
-      </div>
-    </form>
+          <div className="flex justify-end gap-3 pt-2 border-t border-border">
+            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Saving..." : "Save Risk"}
+            </Button>
+          </div>
+        </form>
+      </TabsContent>
+
+      {initial.id && (
+        <TabsContent value="history" className="space-y-4">
+          <RiskHistory riskId={initial.id} />
+        </TabsContent>
+      )}
+    </Tabs>
   );
 }
