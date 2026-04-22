@@ -14,6 +14,7 @@ import AgentHub from '@/pages/AgentHub';
 import UserManagement from '@/pages/UserManagement';
 import Settings from '@/pages/Settings';
 import Pricing from '@/pages/Pricing';
+import Installation from '@/pages/Installation';
 
 const AuthenticatedApp = () => {
   return (
@@ -29,6 +30,7 @@ const AuthenticatedApp = () => {
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/installation" element={<Installation />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

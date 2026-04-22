@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  riskshield:
+    build: .
+    container_name: riskshield
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:3000}
+      - BASE44_APP_ID=${BASE44_APP_ID}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - riskshield-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: riskshield-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - riskshield
+    restart: unless-stopped
+    networks:
+      - riskshield-network
+
+networks:
+  riskshield-network:
+    driver: bridge
