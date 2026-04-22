@@ -13,7 +13,8 @@ import {
   X,
   ClipboardList,
   Sparkles,
-  Users
+  Users,
+  Settings as SettingsIcon
 } from "lucide-react";
 import HelpPanel from "@/components/HelpPanel";
 import OnboardingWizard from "@/components/OnboardingWizard";
@@ -29,6 +30,7 @@ const navItems = [
   { path: "/audit", label: "Audit Log", icon: ClipboardList },
   { path: "/agents", label: "AI Agents", icon: Sparkles },
   { path: "/users", label: "User Management", icon: Users, adminOnly: true },
+  { path: "/settings", label: "Settings", icon: SettingsIcon },
 ];
 
 export default function AppLayout() {
