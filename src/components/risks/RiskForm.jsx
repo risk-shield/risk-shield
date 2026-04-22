@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LIKELIHOOD_LABELS, CONSEQUENCE_LABELS, RISK_CATEGORIES, TREATMENT_OPTIONS, RISK_STATUSES } from "@/lib/riskUtils";
+import { LIKELIHOOD_LABELS, CONSEQUENCE_LABELS, RISK_CATEGORIES, TREATMENT_OPTIONS, RISK_STATUSES, getRiskRating } from "@/lib/riskUtils";
 import RiskBadge from "./RiskBadge";
 
 const FIELDS = [
@@ -100,6 +100,12 @@ export default function RiskForm({ initial = {}, onSave, onCancel, loading }) {
             <RiskBadge likelihood={form.inherent_likelihood} consequence={form.inherent_consequence} />
           </div>
         </div>
+        {getRiskRating(form.inherent_likelihood, form.inherent_consequence) === "Extreme" && (
+          <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 flex gap-2 items-start">
+            <span className="text-red-700 font-semibold text-sm">⚠ Extreme Risk</span>
+            <span className="text-red-600 text-xs">This risk has an extreme rating and requires immediate attention.</span>
+          </div>
+        )}
         <div className="mt-3 space-y-1.5">
           <Label>Existing Controls</Label>
           <Textarea value={form.existing_controls} onChange={e => set("existing_controls", e.target.value)} placeholder="Describe current controls in place" rows={2} />
@@ -133,6 +139,12 @@ export default function RiskForm({ initial = {}, onSave, onCancel, loading }) {
             <RiskBadge likelihood={form.residual_likelihood} consequence={form.residual_consequence} />
           </div>
         </div>
+        {getRiskRating(form.residual_likelihood, form.residual_consequence) === "Extreme" && (
+          <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 flex gap-2 items-start">
+            <span className="text-red-700 font-semibold text-sm">⚠ Extreme Risk</span>
+            <span className="text-red-600 text-xs">This risk remains extreme even after controls.</span>
+          </div>
+        )}
       </div>
 
       {/* Treatment */}

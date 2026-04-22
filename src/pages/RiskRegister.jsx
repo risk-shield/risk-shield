@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { makeEntityStore, authStore } from "@/lib/localStore";
 
 const RiskStore = makeEntityStore("Risk");
-import { getRiskRating, RISK_COLORS, RISK_CATEGORIES, RISK_STATUSES } from "@/lib/riskUtils";
-import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronUp, X, RefreshCw } from "lucide-react";
+import { getRiskRating, RISK_COLORS, RISK_CATEGORIES, RISK_STATUSES, isExtremeRisk } from "@/lib/riskUtils";
+import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronUp, X, RefreshCw, AlertTriangle } from "lucide-react";
 import AIRiskExtractor from "@/components/risks/AIRiskExtractor";
 import RiskReportExport from "@/components/risks/RiskReportExport";
 import { logRiskCreated, logRiskUpdated, logRiskDeleted } from "@/lib/auditLog";
@@ -181,12 +181,20 @@ export default function RiskRegister() {
               <tbody className="divide-y divide-border">
                 {filtered.length === 0 ? (
                   <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">No risks found. <button className="text-primary underline" onClick={() => { setEditing(null); setShowForm(true); }}>Add one now.</button></td></tr>
-                ) : filtered.map(r => (
-                  <tr key={r.id} className="hover:bg-muted/30 transition-colors">
+                ) : filtered.map(r => {
+                  const inherentExtreme = isExtremeRisk(r.inherent_likelihood, r.inherent_consequence);
+                  const residualExtreme = isExtremeRisk(r.residual_likelihood, r.residual_consequence);
+                  return (
+                  <tr key={r.id} className={`hover:bg-muted/30 transition-colors ${inherentExtreme ? "bg-red-50 border-l-4 border-red-500" : ""}`}>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{r.risk_id || "—"}</td>
                     <td className="px-4 py-3 max-w-48">
-                      <p className="font-medium text-foreground truncate">{r.title}</p>
-                      {r.description && <p className="text-xs text-muted-foreground truncate">{r.description}</p>}
+                      <div className="flex items-start gap-2">
+                        {inherentExtreme && <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />}
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">{r.title}</p>
+                          {r.description && <p className="text-xs text-muted-foreground truncate">{r.description}</p>}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className="text-xs whitespace-nowrap">{r.category}</Badge>
@@ -219,8 +227,9 @@ export default function RiskRegister() {
                         )}
                       </div>
                     </td>
-                  </tr>
-                ))}
+                    </tr>
+                    );
+                    })}
               </tbody>
             </table>
           </div>

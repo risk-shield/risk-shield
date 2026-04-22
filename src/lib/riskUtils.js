@@ -51,6 +51,10 @@ export function getRiskScore(likelihood, consequence) {
   return (likelihood || 0) * (consequence || 0);
 }
 
+export function isExtremeRisk(likelihood, consequence) {
+  return getRiskRating(likelihood, consequence) === "Extreme";
+}
+
 export const RISK_COLORS = {
   Low: { bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300", hex: "#22c55e", cell: "#d1fae5" },
   Medium: { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-300", hex: "#f59e0b", cell: "#fef3c7" },
