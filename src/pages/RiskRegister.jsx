@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { getRiskRating, RISK_COLORS, RISK_CATEGORIES, RISK_STATUSES } from "@/lib/riskUtils";
-import { Plus, Search, Filter, Pencil, Trash2, ChevronDown, ChevronUp, X, RefreshCw } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ChevronDown, ChevronUp, X, RefreshCw } from "lucide-react";
+import AIRiskExtractor from "@/components/risks/AIRiskExtractor";
+import RiskReportExport from "@/components/risks/RiskReportExport";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -92,9 +94,13 @@ export default function RiskRegister() {
           <h1 className="text-2xl font-display text-foreground">Risk Register</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{risks.length} total risks · {filtered.length} shown</p>
         </div>
-        <Button onClick={() => { setEditing(null); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> Add Risk
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <RiskReportExport risks={risks} />
+          <AIRiskExtractor onRisksImported={load} />
+          <Button onClick={() => { setEditing(null); setShowForm(true); }} className="gap-2">
+            <Plus className="w-4 h-4" /> Add Risk
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
