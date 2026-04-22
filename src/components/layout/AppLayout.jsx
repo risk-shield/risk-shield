@@ -11,8 +11,10 @@ import {
   Shield,
   Menu,
   X,
-  ClipboardList
+  ClipboardList,
+  Sparkles
 } from "lucide-react";
+import HelpPanel from "@/components/HelpPanel";
 import { Outlet } from "react-router-dom";
 
 const navItems = [
@@ -21,6 +23,7 @@ const navItems = [
   { path: "/matrix", label: "Risk Matrix", icon: Grid3X3 },
   { path: "/treatments", label: "Treatment Plans", icon: FileText },
   { path: "/audit", label: "Audit Log", icon: ClipboardList },
+  { path: "/agents", label: "AI Agents", icon: Sparkles },
 ];
 
 export default function AppLayout() {
@@ -80,14 +83,16 @@ export default function AppLayout() {
           })}
         </nav>
 
-        {/* Collapse toggle */}
-        <div className="p-2 border-t border-sidebar-border hidden lg:block">
+        {/* Collapse toggle + Help */}
+        <div className="p-2 border-t border-sidebar-border hidden lg:flex items-center justify-between gap-1">
+          {!collapsed && <HelpPanel />}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center p-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent/60 transition-colors"
+            className="flex-1 flex items-center justify-center p-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent/60 transition-colors"
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
+          {collapsed && <HelpPanel />}
         </div>
       </aside>
 
