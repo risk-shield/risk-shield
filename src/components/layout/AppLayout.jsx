@@ -12,9 +12,13 @@ import {
   Menu,
   X,
   ClipboardList,
-  Sparkles
+  Sparkles,
+  Users
 } from "lucide-react";
 import HelpPanel from "@/components/HelpPanel";
+import OnboardingWizard from "@/components/OnboardingWizard";
+import { useRole } from "@/lib/useRole";
+import { base44 } from "@/api/base44Client";
 import { Outlet } from "react-router-dom";
 
 const navItems = [
@@ -24,15 +28,29 @@ const navItems = [
   { path: "/treatments", label: "Treatment Plans", icon: FileText },
   { path: "/audit", label: "Audit Log", icon: ClipboardList },
   { path: "/agents", label: "AI Agents", icon: Sparkles },
+  { path: "/users", label: "User Management", icon: Users, adminOnly: true },
 ];
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const { user, isAdmin } = useRole();
   const location = useLocation();
+
+  useState(() => {
+    base44.auth.me().then(u => {
+      setCurrentUser(u);
+      if (u && !u.onboarding_complete) setShowOnboarding(true);
+    }).catch(() => {});
+  });
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
+      {showOnboarding && (
+        <OnboardingWizard user={currentUser} onComplete={() => setShowOnboarding(false)} />
+      )}
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -62,7 +80,7 @@ export default function AppLayout() {
 
         {/* Nav */}
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          {navItems.map(({ path, label, icon: Icon }) => {
+          {navItems.filter(item => !item.adminOnly || isAdmin).map(({ path, label, icon: Icon }) => {
             const active = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
             return (
               <Link

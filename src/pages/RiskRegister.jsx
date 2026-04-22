@@ -14,8 +14,10 @@ import RiskBadge from "@/components/risks/RiskBadge";
 import RiskForm from "@/components/risks/RiskForm";
 import { format, parseISO } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import { useRole } from "@/lib/useRole";
 
 export default function RiskRegister() {
+  const { canEdit, canDelete } = useRole();
   const [risks, setRisks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,10 +104,12 @@ export default function RiskRegister() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <RiskReportExport risks={risks} />
-          <AIRiskExtractor onRisksImported={load} />
-          <Button onClick={() => { setEditing(null); setShowForm(true); }} className="gap-2">
-            <Plus className="w-4 h-4" /> Add Risk
-          </Button>
+          {canEdit && <AIRiskExtractor onRisksImported={load} />}
+          {canEdit && (
+            <Button onClick={() => { setEditing(null); setShowForm(true); }} className="gap-2">
+              <Plus className="w-4 h-4" /> Add Risk
+            </Button>
+          )}
         </div>
       </div>
 
@@ -201,12 +205,16 @@ export default function RiskRegister() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditing(r); setShowForm(true); }}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {canEdit && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditing(r); setShowForm(true); }}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>

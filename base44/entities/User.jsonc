@@ -1,0 +1,33 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "description": "The role of the user in the system",
+      "enum": [
+        "admin",
+        "risk_manager",
+        "viewer"
+      ],
+      "default": "viewer"
+    },
+    "department": {
+      "type": "string",
+      "description": "User's department or business unit"
+    },
+    "notification_email": {
+      "type": "boolean",
+      "description": "Whether to receive email review reminders",
+      "default": true
+    },
+    "onboarding_complete": {
+      "type": "boolean",
+      "description": "Whether the user has completed onboarding",
+      "default": false
+    }
+  },
+  "required": [
+    "role"
+  ]
+}
