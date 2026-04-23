@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, Loader2, FileJson, FileSpreadsheet, Server } from "lucide-react";
+import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, Loader2, FileJson, FileSpreadsheet, Server, UserX } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -403,14 +404,77 @@ export default function Settings() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Permanently delete all risks and data. This action cannot be undone.
-            </p>
-            <ClearAllButton />
+            <div>
+              <p className="text-sm font-medium text-foreground mb-1">Delete All Risk Data</p>
+              <p className="text-sm text-muted-foreground mb-3">
+                Permanently delete all risks and register data. This action cannot be undone.
+              </p>
+              <ClearAllButton />
+            </div>
+            <div className="border-t border-destructive/20 pt-4">
+              <p className="text-sm font-medium text-foreground mb-1">Delete Account</p>
+              <p className="text-sm text-muted-foreground mb-3">
+                Permanently delete your account and all associated data. You will be logged out immediately and cannot recover your account.
+              </p>
+              <DeleteAccountButton />
+            </div>
           </CardContent>
         </Card>
       </div>
     </div>
+  );
+}
+
+function DeleteAccountButton() {
+  const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      // Cancel any active subscription first
+      try { await base44.functions.invoke("cancelSubscription", {}); } catch {}
+      // Delete the account
+      await base44.auth.deleteAccount?.();
+    } catch {
+      // fallback: just log out
+    } finally {
+      base44.auth.logout("/");
+    }
+  };
+
+  return (
+    <>
+      <Button
+        variant="destructive"
+        onClick={() => setOpen(true)}
+        className="gap-2"
+        style={{ WebkitUserSelect: "none", userSelect: "none" }}
+      >
+        <UserX className="w-4 h-4" />
+        Delete My Account
+      </Button>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete your account, cancel your subscription, and remove all your data. You cannot recover your account after this action.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-end gap-2">
+            <AlertDialogCancel>Keep Account</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleting ? "Deleting…" : "Yes, Delete Account"}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

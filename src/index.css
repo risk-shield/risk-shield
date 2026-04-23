@@ -80,7 +80,13 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground font-inter;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  button, a[role="button"], nav a {
+    -webkit-user-select: none;
+    user-select: none;
   }
 }

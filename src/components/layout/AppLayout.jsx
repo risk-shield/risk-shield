@@ -23,6 +23,7 @@ import { PLAN_LEVELS } from "@/lib/useSubscription";
 import HelpPanel from "@/components/HelpPanel";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import PaymentFailedLockdown from "@/components/PaymentFailedLockdown";
+import BottomNav from "@/components/layout/BottomNav";
 import { useRole } from "@/lib/useRole";
 import { useSubscription } from "@/lib/useSubscription";
 import { authStore } from "@/lib/localStore";
@@ -77,7 +78,10 @@ export default function AppLayout() {
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         {/* Logo */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
+        <div
+          className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border"
+          style={{ paddingTop: "calc(1.25rem + env(safe-area-inset-top))" }}
+        >
           <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
             <Shield className="w-4 h-4 text-sidebar-primary-foreground" />
           </div>
@@ -154,20 +158,33 @@ export default function AppLayout() {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar mobile */}
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-card">
-          <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-md hover:bg-muted">
+        <header
+          className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-card"
+          style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
+        >
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-1.5 rounded-md hover:bg-muted select-none"
+            style={{ WebkitUserSelect: "none", userSelect: "none" }}
+          >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 select-none" style={{ WebkitUserSelect: "none", userSelect: "none" }}>
             <Shield className="w-4 h-4 text-primary" />
             <span className="font-display text-base text-foreground">RiskShield</span>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
+        {/* pb on mobile to clear bottom nav */}
+        <main className="flex-1 overflow-y-auto pb-0 lg:pb-0" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+          <div className="lg:pb-0 pb-16">
+            <Outlet />
+          </div>
         </main>
       </div>
+
+      {/* Mobile bottom nav */}
+      <BottomNav />
     </div>
   );
 }
