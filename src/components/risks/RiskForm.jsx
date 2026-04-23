@@ -3,11 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MobileSelect } from "@/components/ui/MobileSelect";
 import { LIKELIHOOD_LABELS, CONSEQUENCE_LABELS, RISK_CATEGORIES, TREATMENT_OPTIONS, RISK_STATUSES, getRiskRating } from "@/lib/riskUtils";
 import RiskBadge from "./RiskBadge";
 import RiskHistory from "./RiskHistory";
+
+// Pre-built option arrays for MobileSelect
+const CATEGORY_OPTS = RISK_CATEGORIES.map(c => ({ value: c, label: c }));
+const STATUS_OPTS = RISK_STATUSES.map(s => ({ value: s, label: s }));
+const LIKELIHOOD_OPTS = [1,2,3,4,5].map(n => ({ value: String(n), label: `${n} – ${LIKELIHOOD_LABELS[n]}` }));
+const CONSEQUENCE_OPTS = [1,2,3,4,5].map(n => ({ value: String(n), label: `${n} – ${CONSEQUENCE_LABELS[n]}` }));
+const TREATMENT_OPTS = TREATMENT_OPTIONS.map(t => ({ value: t, label: t }));
 
 const FIELDS = [
   { id: "risk_id", label: "Risk ID", type: "text", placeholder: "e.g. R-001" },
@@ -51,12 +58,7 @@ export default function RiskForm({ initial = {}, onSave, onCancel, loading }) {
           </div>
           <div className="space-y-1.5">
             <Label>Category *</Label>
-            <Select value={form.category} onValueChange={v => set("category", v)}>
-              <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-              <SelectContent>
-                {RISK_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <MobileSelect value={form.category} onValueChange={v => set("category", v)} placeholder="Select category" options={CATEGORY_OPTS} />
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <Label>Risk Title *</Label>
@@ -72,12 +74,7 @@ export default function RiskForm({ initial = {}, onSave, onCancel, loading }) {
           </div>
           <div className="space-y-1.5">
             <Label>Status</Label>
-            <Select value={form.status} onValueChange={v => set("status", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {RISK_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <MobileSelect value={form.status} onValueChange={v => set("status", v)} placeholder="Status" options={STATUS_OPTS} />
           </div>
         </div>
       </div>
@@ -88,21 +85,11 @@ export default function RiskForm({ initial = {}, onSave, onCancel, loading }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div className="space-y-1.5">
             <Label>Likelihood</Label>
-            <Select value={String(form.inherent_likelihood)} onValueChange={v => set("inherent_likelihood", Number(v))}>
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-              <SelectContent>
-                {[1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n} – {LIKELIHOOD_LABELS[n]}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <MobileSelect value={String(form.inherent_likelihood)} onValueChange={v => set("inherent_likelihood", Number(v))} placeholder="Select" options={LIKELIHOOD_OPTS} />
           </div>
           <div className="space-y-1.5">
             <Label>Consequence</Label>
-            <Select value={String(form.inherent_consequence)} onValueChange={v => set("inherent_consequence", Number(v))}>
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-              <SelectContent>
-                {[1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n} – {CONSEQUENCE_LABELS[n]}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <MobileSelect value={String(form.inherent_consequence)} onValueChange={v => set("inherent_consequence", Number(v))} placeholder="Select" options={CONSEQUENCE_OPTS} />
           </div>
           <div className="flex items-center gap-2 pb-0.5">
             <span className="text-sm text-muted-foreground">Rating:</span>
@@ -127,21 +114,11 @@ export default function RiskForm({ initial = {}, onSave, onCancel, loading }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div className="space-y-1.5">
             <Label>Likelihood</Label>
-            <Select value={String(form.residual_likelihood)} onValueChange={v => set("residual_likelihood", Number(v))}>
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-              <SelectContent>
-                {[1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n} – {LIKELIHOOD_LABELS[n]}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <MobileSelect value={String(form.residual_likelihood)} onValueChange={v => set("residual_likelihood", Number(v))} placeholder="Select" options={LIKELIHOOD_OPTS} />
           </div>
           <div className="space-y-1.5">
             <Label>Consequence</Label>
-            <Select value={String(form.residual_consequence)} onValueChange={v => set("residual_consequence", Number(v))}>
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-              <SelectContent>
-                {[1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n} – {CONSEQUENCE_LABELS[n]}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <MobileSelect value={String(form.residual_consequence)} onValueChange={v => set("residual_consequence", Number(v))} placeholder="Select" options={CONSEQUENCE_OPTS} />
           </div>
           <div className="flex items-center gap-2 pb-0.5">
             <span className="text-sm text-muted-foreground">Rating:</span>
@@ -162,12 +139,7 @@ export default function RiskForm({ initial = {}, onSave, onCancel, loading }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>Treatment Option</Label>
-            <Select value={form.treatment_option} onValueChange={v => set("treatment_option", v)}>
-              <SelectTrigger><SelectValue placeholder="Avoid / Reduce / Transfer / Accept" /></SelectTrigger>
-              <SelectContent>
-                {TREATMENT_OPTIONS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <MobileSelect value={form.treatment_option} onValueChange={v => set("treatment_option", v)} placeholder="Avoid / Reduce / Transfer / Accept" options={TREATMENT_OPTS} />
           </div>
           <div className="space-y-1.5">
             <Label>Treatment Owner</Label>

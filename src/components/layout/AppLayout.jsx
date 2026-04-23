@@ -24,6 +24,7 @@ import HelpPanel from "@/components/HelpPanel";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import PaymentFailedLockdown from "@/components/PaymentFailedLockdown";
 import BottomNav from "@/components/layout/BottomNav";
+import PageTransition from "@/components/layout/PageTransition";
 import { useRole } from "@/lib/useRole";
 import { useSubscription } from "@/lib/useSubscription";
 import { authStore } from "@/lib/localStore";
@@ -178,7 +179,9 @@ export default function AppLayout() {
         {/* pb on mobile to clear bottom nav */}
         <main className="flex-1 overflow-y-auto pb-0 lg:pb-0" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           <div className="lg:pb-0 pb-16">
-            <Outlet />
+            <PageTransition>
+              <Outlet />
+            </PageTransition>
           </div>
         </main>
       </div>

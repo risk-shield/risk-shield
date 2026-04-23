@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { makeEntityStore, authStore } from "@/lib/localStore";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 
 const RiskStore = makeEntityStore("Risk");
 import { getRiskRating, RISK_COLORS, RISK_CATEGORIES, RISK_STATUSES, isExtremeRisk } from "@/lib/riskUtils";
@@ -33,14 +34,16 @@ export default function RiskRegister() {
   const [sortDir, setSortDir] = useState("desc");
   const { toast } = useToast();
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const data = await RiskStore.list("-created_date", 500);
     setRisks(data);
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const { ref: scrollRef, pullY, pulling } = usePullToRefresh(load);
 
   const filtered = risks
     .filter(r => {
@@ -64,27 +67,36 @@ export default function RiskRegister() {
     setSaving(true);
     const user = await authStore.me();
     if (editing) {
+      // Optimistic update
+      setRisks(prev => prev.map(r => r.id === editing.id ? { ...r, ...form } : r));
+      setShowForm(false);
+      setEditing(null);
       await RiskStore.update(editing.id, form);
       await logRiskUpdated(editing, { ...editing, ...form }, user);
       toast({ title: "Risk updated" });
     } else {
+      // Optimistic insert with temp id
+      const tempId = `temp-${Date.now()}`;
+      const optimistic = { ...form, id: tempId, created_date: new Date().toISOString() };
+      setRisks(prev => [optimistic, ...prev]);
+      setShowForm(false);
+      setEditing(null);
       const created = await RiskStore.create(form);
+      setRisks(prev => prev.map(r => r.id === tempId ? created : r));
       await logRiskCreated(created, user);
       toast({ title: "Risk added" });
     }
     setSaving(false);
-    setShowForm(false);
-    setEditing(null);
-    load();
   };
 
   const handleDelete = async (risk) => {
     if (!confirm("Delete this risk?")) return;
+    // Optimistic remove
+    setRisks(prev => prev.filter(r => r.id !== risk.id));
     const user = await authStore.me();
     await RiskStore.delete(risk.id);
     await logRiskDeleted(risk, user);
     toast({ title: "Risk deleted" });
-    load();
   };
 
   const toggleSort = (field) => {
@@ -97,7 +109,13 @@ export default function RiskRegister() {
     : <ChevronDown className="w-3 h-3 opacity-30" />;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 animate-fade-in">
+    <div ref={scrollRef} className="p-6 lg:p-8 space-y-6 animate-fade-in overflow-y-auto">
+      {pullY > 0 && (
+        <div className="flex items-center justify-center text-muted-foreground transition-all" style={{ height: pullY / 2, overflow: "hidden" }}>
+          <RefreshCw className={`w-5 h-5 transition-transform ${pulling ? "animate-spin text-primary" : ""}`}
+            style={{ transform: `rotate(${pullY * 2}deg)` }} />
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

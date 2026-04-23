@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { makeEntityStore } from "@/lib/localStore";
 
 const RiskStore = makeEntityStore("Risk");
 import { Link } from "react-router-dom";
 import { getRiskRating, RISK_COLORS, CATEGORY_COLORS, RISK_CATEGORIES } from "@/lib/riskUtils";
 import { Shield, TrendingDown, AlertTriangle, CheckCircle2, Clock, ArrowRight, RefreshCw } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,15 @@ export default function Dashboard() {
   const [risks, setRisks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    RiskStore.list("-created_date", 200).then(r => {
-      setRisks(r);
-      setLoading(false);
-    });
+  const fetchRisks = useCallback(async () => {
+    const r = await RiskStore.list("-created_date", 200);
+    setRisks(r);
+    setLoading(false);
   }, []);
+
+  useEffect(() => { fetchRisks(); }, [fetchRisks]);
+
+  const { ref: scrollRef, pullY, pulling } = usePullToRefresh(fetchRisks);
 
   const ratingOf = r => getRiskRating(r.inherent_likelihood, r.inherent_consequence);
   const residualRatingOf = r => getRiskRating(r.residual_likelihood, r.residual_consequence);
@@ -63,7 +67,17 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="p-6 lg:p-8 space-y-8 animate-fade-in">
+    <div ref={scrollRef} className="p-6 lg:p-8 space-y-8 animate-fade-in overflow-y-auto">
+      {/* Pull-to-refresh indicator */}
+      {pullY > 0 && (
+        <div
+          className="flex items-center justify-center text-muted-foreground transition-all"
+          style={{ height: pullY / 2, overflow: "hidden" }}
+        >
+          <RefreshCw className={`w-5 h-5 transition-transform ${pulling ? "animate-spin text-primary" : ""}`}
+            style={{ transform: `rotate(${pullY * 2}deg)` }} />
+        </div>
+      )}
       {/* Header */}
       <div>
         <h1 className="text-2xl font-display text-foreground">Risk Dashboard</h1>
