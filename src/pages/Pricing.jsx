@@ -3,48 +3,92 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 
 const PLANS = [
   {
+    id: 'evaluation',
+    name: 'Evaluation',
+    price: 10,
+    description: 'Try RiskShield with limited features',
+    features: [
+      { label: 'Single user (1 seat)', included: true },
+      { label: 'Basic Risk Register', included: true },
+      { label: 'Risk Matrix', included: true },
+      { label: 'Basic Treatment Plans', included: true },
+      { label: 'Audit Log', included: false },
+      { label: 'AI Agents', included: false },
+      { label: 'Email Notifications', included: false },
+      { label: 'User Management', included: false },
+    ],
+  },
+  {
+    id: 'basic',
     name: 'Basic',
     price: 99,
     description: 'Essential risk management',
-    features: ['Up to 5 users', 'Basic risk register', 'Risk matrix', 'Email notifications', 'Audit log']
+    features: [
+      { label: 'Up to 5 users', included: true },
+      { label: 'Basic Risk Register', included: true },
+      { label: 'Risk Matrix', included: true },
+      { label: 'Treatment Plans', included: true },
+      { label: 'Audit Log', included: true },
+      { label: 'Email Notifications', included: true },
+      { label: 'AI Agents', included: false },
+      { label: 'User Management', included: false },
+    ],
   },
   {
+    id: 'professional',
     name: 'Professional',
     price: 299,
     description: 'For growing teams',
-    features: ['Up to 50 users', 'Advanced analytics', 'Treatment plans', 'Slack integration', 'Custom reports', 'API access'],
-    popular: true
+    popular: true,
+    features: [
+      { label: 'Up to 50 users', included: true },
+      { label: 'Full Risk Register', included: true },
+      { label: 'Risk Matrix', included: true },
+      { label: 'Treatment Plans', included: true },
+      { label: 'Audit Log', included: true },
+      { label: 'Email Notifications', included: true },
+      { label: 'AI Agents', included: true },
+      { label: 'User Management', included: true },
+      { label: 'Advanced Analytics', included: true },
+      { label: 'API Access', included: true },
+    ],
   },
   {
+    id: 'enterprise',
     name: 'Enterprise',
     price: 999,
     description: 'Full-featured platform',
-    features: ['Unlimited users', 'All features', 'Custom integrations', 'Dedicated support', 'Advanced compliance', 'White-label options'],
-    contactSales: true
-  }
+    contactSales: true,
+    features: [
+      { label: 'Unlimited users', included: true },
+      { label: 'All features', included: true },
+      { label: 'Custom integrations', included: true },
+      { label: 'Dedicated support', included: true },
+      { label: 'Advanced compliance', included: true },
+      { label: 'White-label options', included: true },
+    ],
+  },
 ];
 
 export default function Pricing() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(null);
   const [error, setError] = useState('');
   const params = new URLSearchParams(window.location.search);
   const [success, setSuccess] = useState(params.get('success') === 'true');
 
-  const handleCheckout = async (plan) => {
+  const handleCheckout = async (planId) => {
     if (window.self !== window.top) {
       alert('Checkout is only available from the published app. Please open the app directly.');
       return;
     }
-    setLoading(true);
+    setLoading(planId);
     setError('');
-
     try {
-      const response = await base44.functions.invoke('createCheckoutSession', { plan: plan.toLowerCase() });
-      
+      const response = await base44.functions.invoke('createCheckoutSession', { plan: planId });
       if (response.data.url) {
         window.location.href = response.data.url;
       } else {
@@ -54,7 +98,7 @@ export default function Pricing() {
       setError('Error initiating checkout. Please try again.');
       console.error('Checkout error:', err);
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -93,54 +137,63 @@ export default function Pricing() {
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {PLANS.map((plan, idx) => (
-            <Card 
-              key={idx} 
-              className={plan.popular ? 'border-primary shadow-lg scale-105' : ''}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {PLANS.map((plan) => (
+            <Card
+              key={plan.id}
+              className={`flex flex-col ${plan.popular ? 'border-primary shadow-lg ring-2 ring-primary/20' : ''}`}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
+                    <CardTitle className="text-xl">{plan.name}</CardTitle>
+                    <CardDescription className="mt-1">{plan.description}</CardDescription>
                   </div>
-                  {plan.popular && <Badge>Popular</Badge>}
+                  {plan.popular && <Badge className="ml-2 shrink-0">Popular</Badge>}
+                  {plan.id === 'evaluation' && <Badge variant="outline" className="ml-2 shrink-0 text-xs">Trial</Badge>}
                 </div>
                 <div className="mt-4">
                   {plan.contactSales ? (
                     <p className="text-3xl font-bold text-foreground">Custom</p>
                   ) : (
-                    <p className="text-3xl font-bold text-foreground">${plan.price}<span className="text-sm text-muted-foreground">/mo</span></p>
+                    <p className="text-3xl font-bold text-foreground">
+                      ${plan.price}
+                      <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                    </p>
                   )}
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-6">
-                <div className="space-y-3">
+              <CardContent className="flex flex-col flex-1 space-y-4">
+                <div className="space-y-2 flex-1">
                   {plan.features.map((feature, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-foreground">{feature}</span>
+                    <div key={i} className={`flex items-start gap-2 ${!feature.included ? 'opacity-40' : ''}`}>
+                      {feature.included ? (
+                        <Check className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                      ) : (
+                        <Lock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      )}
+                      <span className="text-sm text-foreground">{feature.label}</span>
                     </div>
                   ))}
                 </div>
 
                 {plan.contactSales ? (
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
+                  <Button
+                    variant="outline"
+                    className="w-full"
                     onClick={() => window.location.href = 'mailto:sales@riskshield.io'}
                   >
                     Contact Sales
                   </Button>
                 ) : (
-                  <Button 
+                  <Button
                     className="w-full"
-                    onClick={() => handleCheckout(plan.name)}
-                    disabled={loading}
+                    variant={plan.id === 'evaluation' ? 'outline' : 'default'}
+                    onClick={() => handleCheckout(plan.id)}
+                    disabled={loading !== null}
                   >
-                    {loading ? 'Processing...' : 'Get Started'}
+                    {loading === plan.id ? 'Processing...' : plan.id === 'evaluation' ? 'Start Evaluation' : 'Get Started'}
                   </Button>
                 )}
               </CardContent>

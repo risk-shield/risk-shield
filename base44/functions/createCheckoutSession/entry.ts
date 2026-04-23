@@ -4,6 +4,7 @@ import Stripe from 'npm:stripe@16.0.0';
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
 const PRICES = {
+  evaluation: 'price_1TPJ9NBjqCVrKUQl9ljdt9a6',
   basic: 'price_1TPIUFBjqCVrKUQlwILvFCMM',
   professional: 'price_1TPIUFBjqCVrKUQlYhtTCcHO',
   enterprise: 'price_1TPIUFBjqCVrKUQldtBGHfbq'

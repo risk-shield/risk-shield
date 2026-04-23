@@ -15,11 +15,15 @@ import {
   Sparkles,
   Users,
   Settings as SettingsIcon,
-  Server
+  Server,
+  Lock,
+  ArrowUpCircle
 } from "lucide-react";
+import { PLAN_LEVELS } from "@/lib/useSubscription";
 import HelpPanel from "@/components/HelpPanel";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import { useRole } from "@/lib/useRole";
+import { useSubscription } from "@/lib/useSubscription";
 import { authStore } from "@/lib/localStore";
 import { Outlet } from "react-router-dom";
 
@@ -28,9 +32,9 @@ const navItems = [
   { path: "/register", label: "Risk Register", icon: ShieldAlert },
   { path: "/matrix", label: "Risk Matrix", icon: Grid3X3 },
   { path: "/treatments", label: "Treatment Plans", icon: FileText },
-  { path: "/audit", label: "Audit Log", icon: ClipboardList },
-  { path: "/agents", label: "AI Agents", icon: Sparkles },
-  { path: "/users", label: "User Management", icon: Users, adminOnly: true },
+  { path: "/audit", label: "Audit Log", icon: ClipboardList, minPlan: "basic" },
+  { path: "/agents", label: "AI Agents", icon: Sparkles, minPlan: "professional" },
+  { path: "/users", label: "User Management", icon: Users, adminOnly: true, minPlan: "professional" },
   { path: "/settings", label: "Settings", icon: SettingsIcon },
   { path: "/installation", label: "Installation", icon: Server },
 ];
@@ -41,6 +45,7 @@ export default function AppLayout() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const { user, isAdmin } = useRole();
+  const { plan, isEvaluation } = useSubscription();
   const location = useLocation();
 
   useState(() => {
@@ -84,26 +89,52 @@ export default function AppLayout() {
 
         {/* Nav */}
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          {navItems.filter(item => !item.adminOnly || isAdmin).map(({ path, label, icon: Icon }) => {
+          {navItems.filter(item => !item.adminOnly || isAdmin).map(({ path, label, icon: Icon, minPlan }) => {
             const active = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+            const planLevel = PLAN_LEVELS[plan] ?? 0;
+            const requiredLevel = minPlan ? (PLAN_LEVELS[minPlan] ?? 0) : 0;
+            const locked = minPlan && planLevel < requiredLevel;
             return (
               <Link
                 key={path}
-                to={path}
+                to={locked ? "/pricing" : path}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150",
-                  active
+                  active && !locked
                     ? "bg-sidebar-accent text-sidebar-primary border border-sidebar-border"
+                    : locked
+                    ? "text-sidebar-foreground/40 cursor-pointer hover:bg-sidebar-accent/30"
                     : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
                 )}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
-                {!collapsed && <span className="animate-fade-in">{label}</span>}
+                {!collapsed && (
+                  <span className="animate-fade-in flex-1">{label}</span>
+                )}
+                {!collapsed && locked && (
+                  <Lock className="w-3 h-3 flex-shrink-0 opacity-60" />
+                )}
               </Link>
             );
           })}
         </nav>
+
+        {/* Upgrade Plan button for evaluation users */}
+        {isEvaluation && (
+          <div className="px-3 pb-2">
+            <Link
+              to="/pricing"
+              className={cn(
+                "flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-semibold transition-all",
+                "bg-sidebar-primary/20 text-sidebar-primary hover:bg-sidebar-primary/30 border border-sidebar-primary/40"
+              )}
+            >
+              <ArrowUpCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              {!collapsed && <span>Upgrade Plan</span>}
+            </Link>
+          </div>
+        )}
 
         {/* Collapse toggle + Help */}
         <div className="p-2 border-t border-sidebar-border hidden lg:flex items-center justify-between gap-1">
