@@ -227,7 +227,7 @@ export default function Pricing() {
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => window.location.href = 'mailto:sales@riskshield.io'}
+                    onClick={() => window.location.href = 'mailto:riskshield@dragonweb.com.au'}
                   >
                     Contact Sales
                   </Button>
