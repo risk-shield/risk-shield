@@ -24,7 +24,9 @@ import HelpPanel from "@/components/HelpPanel";
 import OnboardingWizard from "@/components/OnboardingWizard";
 import PaymentFailedLockdown from "@/components/PaymentFailedLockdown";
 import BottomNav from "@/components/layout/BottomNav";
+import MobileHeader from "@/components/layout/MobileHeader";
 import PageTransition from "@/components/layout/PageTransition";
+import { useScrollPreservation } from "@/hooks/useScrollPreservation";
 import { useRole } from "@/lib/useRole";
 import { useSubscription } from "@/lib/useSubscription";
 import { authStore } from "@/lib/localStore";
@@ -50,6 +52,7 @@ export default function AppLayout() {
   const { user, isAdmin } = useRole();
   const { plan, isEvaluation, isPastDue, pastDueSubscription } = useSubscription();
   const location = useLocation();
+  const mainScrollRef = useScrollPreservation();
 
   useState(() => {
     authStore.me().then(u => {
@@ -159,25 +162,21 @@ export default function AppLayout() {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar mobile */}
-        <header
-          className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-card"
-          style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
-        >
+        <div className="lg:hidden flex items-center border-b border-border bg-card" style={{ paddingTop: "env(safe-area-inset-top)" }}>
           <button
             onClick={() => setMobileOpen(true)}
-            className="p-1.5 rounded-md hover:bg-muted select-none"
+            className="p-3 hover:bg-muted select-none"
             style={{ WebkitUserSelect: "none", userSelect: "none" }}
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2 select-none" style={{ WebkitUserSelect: "none", userSelect: "none" }}>
-            <Shield className="w-4 h-4 text-primary" />
-            <span className="font-display text-base text-foreground">RiskShield</span>
+          <div className="flex-1">
+            <MobileHeader />
           </div>
-        </header>
+        </div>
 
-        {/* pb on mobile to clear bottom nav */}
-        <main className="flex-1 overflow-y-auto pb-0 lg:pb-0" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        {/* Main content — Outlet handles routing */}
+        <main ref={mainScrollRef} className="flex-1 overflow-y-auto pb-0 lg:pb-0" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           <div className="lg:pb-0 pb-16">
             <PageTransition>
               <Outlet />

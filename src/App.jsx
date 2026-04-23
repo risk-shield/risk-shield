@@ -16,6 +16,7 @@ import UserManagement from '@/pages/UserManagement';
 import Settings from '@/pages/Settings';
 import Pricing from '@/pages/Pricing';
 import Installation from '@/pages/Installation';
+import RiskFormPage from '@/pages/RiskFormPage';
 
 const AuthenticatedApp = () => {
   return (
@@ -29,6 +30,8 @@ const AuthenticatedApp = () => {
         <Route path="/agents" element={<AgentHub />} />
         <Route path="/users" element={<UserManagement />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/register/add" element={<RiskFormPage />} />
+        <Route path="/register/edit/:id" element={<RiskFormPage />} />
       </Route>
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/installation" element={<Installation />} />

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { makeEntityStore, authStore } from "@/lib/localStore";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { useNavigate } from "react-router-dom";
 
 const RiskStore = makeEntityStore("Risk");
 import { getRiskRating, RISK_COLORS, RISK_CATEGORIES, RISK_STATUSES, isExtremeRisk } from "@/lib/riskUtils";
@@ -15,12 +16,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import RiskBadge from "@/components/risks/RiskBadge";
 import RiskForm from "@/components/risks/RiskForm";
+import RiskCardList from "@/components/risks/RiskCardList";
 import { format, parseISO } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useRole } from "@/lib/useRole";
 
+const isMobile = () => window.innerWidth < 768;
+
 export default function RiskRegister() {
   const { canEdit, canDelete } = useRole();
+  const navigate = useNavigate();
   const [risks, setRisks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -99,6 +104,14 @@ export default function RiskRegister() {
     toast({ title: "Risk deleted" });
   };
 
+  // On mobile → navigate to dedicated route; on desktop → open dialog
+  const openAdd = () => {
+    if (isMobile()) { navigate("/register/add"); } else { setEditing(null); setShowForm(true); }
+  };
+  const openEdit = (risk) => {
+    if (isMobile()) { navigate(`/register/edit/${risk.id}`); } else { setEditing(risk); setShowForm(true); }
+  };
+
   const toggleSort = (field) => {
     if (sortField === field) setSortDir(d => d === "asc" ? "desc" : "asc");
     else { setSortField(field); setSortDir("asc"); }
@@ -126,7 +139,7 @@ export default function RiskRegister() {
           <RiskReportExport risks={risks} />
           {canEdit && <AIRiskExtractor onRisksImported={load} />}
           {canEdit && (
-            <Button onClick={() => { setEditing(null); setShowForm(true); }} className="gap-2">
+            <Button onClick={openAdd} className="gap-2">
               <Plus className="w-4 h-4" /> Add Risk
             </Button>
           )}
@@ -167,91 +180,104 @@ export default function RiskRegister() {
         )}
       </div>
 
-      {/* Table */}
+      {/* Content: Card list on mobile, Table on desktop */}
       {loading ? (
         <div className="flex items-center justify-center h-48">
           <RefreshCw className="w-5 h-5 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b border-border">
-                <tr>
-                  {[
-                    { label: "ID", field: "risk_id" },
-                    { label: "Title", field: "title" },
-                    { label: "Category", field: "category" },
-                    { label: "Inherent Risk", field: "score" },
-                    { label: "Residual Risk", field: null },
-                    { label: "Status", field: "status" },
-                    { label: "Owner", field: "risk_owner" },
-                    { label: "Review", field: "review_date" },
-                    { label: "", field: null },
-                  ].map(col => (
-                    <th key={col.label} className={`px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide ${col.field ? "cursor-pointer hover:text-foreground" : ""}`}
-                      onClick={() => col.field && toggleSort(col.field)}>
-                      <div className="flex items-center gap-1">{col.label}{col.field && <SortIcon field={col.field} />}</div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">No risks found. <button className="text-primary underline" onClick={() => { setEditing(null); setShowForm(true); }}>Add one now.</button></td></tr>
-                ) : filtered.map(r => {
-                  const inherentExtreme = isExtremeRisk(r.inherent_likelihood, r.inherent_consequence);
-                  const residualExtreme = isExtremeRisk(r.residual_likelihood, r.residual_consequence);
-                  return (
-                  <tr key={r.id} className={`hover:bg-muted/30 transition-colors ${inherentExtreme ? "bg-red-50 border-l-4 border-red-500" : ""}`}>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{r.risk_id || "—"}</td>
-                    <td className="px-4 py-3 max-w-48">
-                      <div className="flex items-start gap-2">
-                        {inherentExtreme && <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />}
-                        <div className="min-w-0">
-                          <p className="font-medium text-foreground truncate">{r.title}</p>
-                          {r.description && <p className="text-xs text-muted-foreground truncate">{r.description}</p>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className="text-xs whitespace-nowrap">{r.category}</Badge>
-                    </td>
-                    <td className="px-4 py-3"><RiskBadge likelihood={r.inherent_likelihood} consequence={r.inherent_consequence} /></td>
-                    <td className="px-4 py-3"><RiskBadge likelihood={r.residual_likelihood} consequence={r.residual_consequence} /></td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        r.status === "Closed" ? "bg-emerald-100 text-emerald-800" :
-                        r.status === "Being Treated" ? "bg-blue-100 text-blue-800" :
-                        r.status === "Monitored" ? "bg-purple-100 text-purple-800" :
-                        "bg-gray-100 text-gray-700"
-                      }`}>{r.status}</span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{r.risk_owner || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                      {r.review_date ? format(parseISO(r.review_date), "dd MMM yyyy") : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        {canEdit && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditing(r); setShowForm(true); }}>
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                    </tr>
-                    );
-                    })}
-              </tbody>
-            </table>
+        <>
+          {/* Mobile card list */}
+          <div className="md:hidden">
+            <RiskCardList
+              risks={filtered}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              onEdit={(r) => r ? openEdit(r) : openAdd()}
+              onDelete={handleDelete}
+            />
           </div>
-        </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block border border-border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 border-b border-border">
+                  <tr>
+                    {[
+                      { label: "ID", field: "risk_id" },
+                      { label: "Title", field: "title" },
+                      { label: "Category", field: "category" },
+                      { label: "Inherent Risk", field: "score" },
+                      { label: "Residual Risk", field: null },
+                      { label: "Status", field: "status" },
+                      { label: "Owner", field: "risk_owner" },
+                      { label: "Review", field: "review_date" },
+                      { label: "", field: null },
+                    ].map(col => (
+                      <th key={col.label} className={`px-4 py-3 text-left font-semibold text-muted-foreground text-xs uppercase tracking-wide ${col.field ? "cursor-pointer hover:text-foreground" : ""}`}
+                        onClick={() => col.field && toggleSort(col.field)}>
+                        <div className="flex items-center gap-1">{col.label}{col.field && <SortIcon field={col.field} />}</div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filtered.length === 0 ? (
+                    <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">No risks found. <button className="text-primary underline" onClick={openAdd}>Add one now.</button></td></tr>
+                  ) : filtered.map(r => {
+                    const inherentExtreme = isExtremeRisk(r.inherent_likelihood, r.inherent_consequence);
+                    return (
+                      <tr key={r.id} className={`hover:bg-muted/30 transition-colors ${inherentExtreme ? "bg-red-50 border-l-4 border-red-500" : ""}`}>
+                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{r.risk_id || "—"}</td>
+                        <td className="px-4 py-3 max-w-48">
+                          <div className="flex items-start gap-2">
+                            {inherentExtreme && <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />}
+                            <div className="min-w-0">
+                              <p className="font-medium text-foreground truncate">{r.title}</p>
+                              {r.description && <p className="text-xs text-muted-foreground truncate">{r.description}</p>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant="outline" className="text-xs whitespace-nowrap">{r.category}</Badge>
+                        </td>
+                        <td className="px-4 py-3"><RiskBadge likelihood={r.inherent_likelihood} consequence={r.inherent_consequence} /></td>
+                        <td className="px-4 py-3"><RiskBadge likelihood={r.residual_likelihood} consequence={r.residual_consequence} /></td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                            r.status === "Closed" ? "bg-emerald-100 text-emerald-800" :
+                            r.status === "Being Treated" ? "bg-blue-100 text-blue-800" :
+                            r.status === "Monitored" ? "bg-purple-100 text-purple-800" :
+                            "bg-gray-100 text-gray-700"
+                          }`}>{r.status}</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{r.risk_owner || "—"}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                          {r.review_date ? format(parseISO(r.review_date), "dd MMM yyyy") : "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1">
+                            {canEdit && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(r)}>
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                            {canDelete && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Form dialog */}
