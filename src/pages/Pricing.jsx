@@ -31,9 +31,14 @@ const PLANS = [
 export default function Pricing() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const params = new URLSearchParams(window.location.search);
+  const [success, setSuccess] = useState(params.get('success') === 'true');
 
   const handleCheckout = async (plan) => {
+    if (window.self !== window.top) {
+      alert('Checkout is only available from the published app. Please open the app directly.');
+      return;
+    }
     setLoading(true);
     setError('');
 
