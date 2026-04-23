@@ -68,23 +68,33 @@ Deno.serve(async (req) => {
 
     else if (event.type === 'customer.subscription.updated') {
       const sub = event.data.object;
-      const customerId = sub.customer;
       const status = sub.status;
       const periodEnd = new Date(sub.current_period_end * 1000).toISOString().split('T')[0];
       const cancelAtPeriodEnd = sub.cancel_at_period_end;
 
-      // Find subscription by stripe_subscription_id
+      // Resolve plan_name from price ID
+      const PRICE_TO_PLAN = {
+        'price_1TPJ9NBjqCVrKUQl9ljdt9a6': 'evaluation',
+        'price_1TPIUFBjqCVrKUQlwILvFCMM': 'basic',
+        'price_1TPIUFBjqCVrKUQlYhtTCcHO': 'professional',
+        'price_1TPIUFBjqCVrKUQldtBGHfbq': 'enterprise',
+      };
+      const priceId = sub.items?.data?.[0]?.price?.id;
+      const planName = priceId ? PRICE_TO_PLAN[priceId] : undefined;
+
       const existing = await base44.asServiceRole.entities.Subscription.filter(
         { stripe_subscription_id: sub.id }, undefined, 1
       );
 
       if (existing.length > 0) {
-        await base44.asServiceRole.entities.Subscription.update(existing[0].id, {
+        const updateData = {
           status: status === 'active' ? 'active' : status === 'past_due' ? 'past_due' : 'canceled',
           current_period_end: periodEnd,
           cancel_at_period_end: cancelAtPeriodEnd,
-        });
-        console.log(`Updated subscription ${sub.id} status to: ${status}`);
+        };
+        if (planName) updateData.plan_name = planName;
+        await base44.asServiceRole.entities.Subscription.update(existing[0].id, updateData);
+        console.log(`Updated subscription ${sub.id} status: ${status}, plan: ${planName || 'unchanged'}`);
       }
     }
 
@@ -116,6 +126,13 @@ Deno.serve(async (req) => {
           });
           console.log(`Restored subscription ${subId} to active after successful payment`);
         }
+      }
+
+      // Skip email for the first invoice — Stripe already sends a receipt at checkout
+      const billingReason = invoice.billing_reason;
+      if (billingReason === 'subscription_create') {
+        console.log('Skipping invoice email for initial subscription creation');
+        return Response.json({ received: true });
       }
 
       const customerEmail = invoice.customer_email;

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, Lock } from 'lucide-react';
+import { Check, Lock, Loader2 } from 'lucide-react';
 
 const PLANS = [
   {
@@ -79,6 +79,32 @@ export default function Pricing() {
   const [error, setError] = useState('');
   const params = new URLSearchParams(window.location.search);
   const [success, setSuccess] = useState(params.get('success') === 'true');
+  const [activating, setActivating] = useState(success);
+  const [activated, setActivated] = useState(false);
+  const pollRef = useRef(null);
+
+  useEffect(() => {
+    if (!success) return;
+    // Poll for active subscription after checkout
+    let attempts = 0;
+    pollRef.current = setInterval(async () => {
+      attempts++;
+      try {
+        const subs = await base44.entities.Subscription.list('-created_date', 1);
+        const active = subs.find(s => s.status === 'active');
+        if (active) {
+          clearInterval(pollRef.current);
+          setActivating(false);
+          setActivated(true);
+        }
+      } catch {}
+      if (attempts >= 20) { // stop after ~40s
+        clearInterval(pollRef.current);
+        setActivating(false);
+      }
+    }, 2000);
+    return () => clearInterval(pollRef.current);
+  }, [success]);
 
   const handleCheckout = async (planId) => {
     if (window.self !== window.top) {
@@ -107,15 +133,34 @@ export default function Pricing() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">🎉 Welcome!</CardTitle>
-            <CardDescription>Your subscription is being set up</CardDescription>
+            <CardTitle className="text-2xl">{activated ? '🎉 You\'re all set!' : 'Payment received'}</CardTitle>
+            <CardDescription>
+              {activated ? 'Your account is now active' : 'Activating your subscription…'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Please allow a few moments for your account to be activated. You'll be able to access all features shortly.
-            </p>
-            <Button onClick={() => window.location.href = '/'} className="w-full">
-              Return to Dashboard
+            {activating && (
+              <div className="flex items-center justify-center gap-2 py-2">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span className="text-sm text-muted-foreground">Verifying payment with Stripe…</span>
+              </div>
+            )}
+            {activated && (
+              <p className="text-sm text-muted-foreground">
+                Your subscription is active. All features for your plan are now unlocked.
+              </p>
+            )}
+            {!activating && !activated && (
+              <p className="text-sm text-muted-foreground">
+                This is taking a little longer than usual. Your access will be granted shortly — check back in a moment.
+              </p>
+            )}
+            <Button
+              onClick={() => window.location.href = '/'}
+              className="w-full"
+              disabled={activating}
+            >
+              {activating ? 'Please wait…' : 'Go to Dashboard'}
             </Button>
           </CardContent>
         </Card>

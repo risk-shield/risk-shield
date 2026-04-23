@@ -25,16 +25,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Invalid plan' }, { status: 400 });
     }
 
-    const session = await stripe.checkout.sessions.create({
+    // Reuse existing Stripe customer if available to prevent duplicate subscriptions
+    const existingSubs = await base44.asServiceRole.entities.Subscription.filter(
+      { user_email: user.email }, undefined, 5
+    );
+    const existingCustomerId = existingSubs.find(s => s.stripe_customer_id)?.stripe_customer_id;
+
+    const sessionParams = {
       mode: 'subscription',
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price: PRICES[plan],
-          quantity: 1
-        }
-      ],
-      customer_email: user.email,
+      line_items: [{ price: PRICES[plan], quantity: 1 }],
       success_url: `${req.headers.get('origin')}/pricing?success=true`,
       cancel_url: `${req.headers.get('origin')}/pricing?canceled=true`,
       metadata: {
@@ -42,7 +42,16 @@ Deno.serve(async (req) => {
         user_email: user.email,
         plan: plan
       }
-    });
+    };
+
+    // Use existing customer to prevent Stripe creating duplicate subscriptions
+    if (existingCustomerId) {
+      sessionParams.customer = existingCustomerId;
+    } else {
+      sessionParams.customer_email = user.email;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return Response.json({ url: session.url });
   } catch (error) {

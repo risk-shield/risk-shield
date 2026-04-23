@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { makeEntityStore } from "@/lib/localStore";
+import SubscriptionCard from "@/components/SubscriptionCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -197,6 +198,9 @@ export default function Settings() {
       </div>
 
       <div className="grid gap-5">
+        {/* Subscription & Billing */}
+        <SubscriptionCard />
+
         {/* Export Section */}
         <Card>
           <CardHeader>
