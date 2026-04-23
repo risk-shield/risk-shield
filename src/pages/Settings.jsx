@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, Loader2, FileJson, FileSpreadsheet } from "lucide-react";
+import { Download, Upload, Trash2, AlertTriangle, CheckCircle2, Loader2, FileJson, FileSpreadsheet, Server } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 const RiskStore = makeEntityStore("Risk");
@@ -367,6 +368,27 @@ export default function Settings() {
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Installation */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Server className="w-4 h-4 text-slate-600" />
+              Self-Hosted Deployment
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Deploy RiskShield on your own infrastructure using Docker. View the full installation guide for setup instructions, system requirements, and configuration options.
+            </p>
+            <Link to="/installation">
+              <Button variant="outline" className="gap-2">
+                <Server className="w-4 h-4" />
+                View Installation Guide
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
 
         {/* Danger Zone */}
         <Card className="border-destructive/20 bg-destructive/5">

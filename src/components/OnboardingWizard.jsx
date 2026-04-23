@@ -3,7 +3,8 @@ import { authStore } from "@/lib/localStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, CheckCircle2, ArrowRight, BarChart2, FileText, Sparkles, ClipboardList } from "lucide-react";
+import { Shield, CheckCircle2, ArrowRight, BarChart2, FileText, Sparkles, ClipboardList, Server } from "lucide-react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
@@ -41,6 +42,13 @@ const STEPS = [
     subtitle: "Three intelligent agents to support you",
     icon: Sparkles,
     color: "bg-purple-600",
+  },
+  {
+    id: "installation",
+    title: "Self-hosted deployment",
+    subtitle: "Run RiskShield on your own infrastructure",
+    icon: Server,
+    color: "bg-slate-700",
   },
 ];
 
@@ -188,6 +196,35 @@ export default function OnboardingWizard({ user, onComplete }) {
                 </div>
               ))}
               <p className="text-xs text-muted-foreground text-center pt-1">Access all agents via the <strong>AI Agents</strong> page in the sidebar.</p>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                RiskShield can be deployed on your own servers for complete data control and privacy.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { label: "Docker & Docker Compose", desc: "Containerised deployment in minutes" },
+                  { label: "Nginx Reverse Proxy", desc: "Production-ready load balancing & SSL" },
+                  { label: "Data Persistence", desc: "Automatic backup volumes included" },
+                  { label: "Environment Config", desc: "Full control over your settings" },
+                ].map(f => (
+                  <div key={f.label} className="flex gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                    <Server className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{f.label}</p>
+                      <p className="text-xs text-muted-foreground">{f.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-3 rounded-lg bg-muted/40 text-xs text-muted-foreground text-center">
+                Full instructions available in the{" "}
+                <Link to="/installation" className="text-primary underline font-medium">Installation Guide</Link>
+                {" "}— accessible anytime from Settings or the sidebar.
+              </div>
             </div>
           )}
 
