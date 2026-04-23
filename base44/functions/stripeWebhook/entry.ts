@@ -101,9 +101,44 @@ Deno.serve(async (req) => {
       }
     }
 
+    else if (event.type === 'invoice.paid') {
+      const invoice = event.data.object;
+      const customerEmail = invoice.customer_email;
+      const amountPaid = (invoice.amount_paid / 100).toFixed(2);
+      const currency = invoice.currency.toUpperCase();
+      const invoiceUrl = invoice.hosted_invoice_url;
+      const invoicePdf = invoice.invoice_pdf;
+      const periodEnd = new Date(invoice.period_end * 1000).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+      if (customerEmail) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: customerEmail,
+          subject: `RiskShield – Your invoice for ${currency} $${amountPaid}`,
+          body: `
+<h2>Thank you for your payment</h2>
+<p>Your RiskShield subscription has been renewed successfully.</p>
+<table style="border-collapse:collapse;margin:16px 0;">
+  <tr><td style="padding:4px 12px 4px 0;color:#666;">Amount paid</td><td style="padding:4px 0;font-weight:600;">${currency} $${amountPaid}</td></tr>
+  <tr><td style="padding:4px 12px 4px 0;color:#666;">Next renewal</td><td style="padding:4px 0;">${periodEnd}</td></tr>
+</table>
+${invoiceUrl ? `<p><a href="${invoiceUrl}" style="background:#1e3a5f;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">View Invoice</a></p>` : ''}
+${invoicePdf ? `<p><a href="${invoicePdf}">Download PDF</a></p>` : ''}
+<p style="color:#888;font-size:13px;">If you have any questions, reply to this email.</p>
+          `.trim(),
+        });
+        console.log(`Invoice paid email sent to ${customerEmail} for ${currency} $${amountPaid}`);
+      }
+    }
+
     else if (event.type === 'invoice.payment_failed') {
       const invoice = event.data.object;
       const subId = invoice.subscription;
+      const customerEmail = invoice.customer_email;
+      const amountDue = (invoice.amount_due / 100).toFixed(2);
+      const currency = invoice.currency.toUpperCase();
+      const invoiceUrl = invoice.hosted_invoice_url;
+
+      // Update subscription status
       const existing = await base44.asServiceRole.entities.Subscription.filter(
         { stripe_subscription_id: subId }, undefined, 1
       );
@@ -112,6 +147,22 @@ Deno.serve(async (req) => {
           status: 'past_due',
         });
         console.log(`Marked subscription ${subId} as past_due due to failed payment`);
+      }
+
+      // Notify user
+      if (customerEmail) {
+        await base44.asServiceRole.integrations.Core.SendEmail({
+          to: customerEmail,
+          subject: `RiskShield – Action required: Payment failed`,
+          body: `
+<h2>Your payment could not be processed</h2>
+<p>We were unable to collect your RiskShield subscription payment of <strong>${currency} $${amountDue}</strong>.</p>
+<p>Please update your payment method to avoid losing access to your account.</p>
+${invoiceUrl ? `<p><a href="${invoiceUrl}" style="background:#c0392b;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block;">Update Payment Method</a></p>` : ''}
+<p style="color:#888;font-size:13px;">If you need help, reply to this email.</p>
+          `.trim(),
+        });
+        console.log(`Payment failed email sent to ${customerEmail}`);
       }
     }
 
