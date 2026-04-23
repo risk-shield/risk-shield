@@ -22,6 +22,7 @@ import {
 import { PLAN_LEVELS } from "@/lib/useSubscription";
 import HelpPanel from "@/components/HelpPanel";
 import OnboardingWizard from "@/components/OnboardingWizard";
+import PaymentFailedLockdown from "@/components/PaymentFailedLockdown";
 import { useRole } from "@/lib/useRole";
 import { useSubscription } from "@/lib/useSubscription";
 import { authStore } from "@/lib/localStore";
@@ -45,7 +46,7 @@ export default function AppLayout() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const { user, isAdmin } = useRole();
-  const { plan, isEvaluation } = useSubscription();
+  const { plan, isEvaluation, isPastDue, pastDueSubscription } = useSubscription();
   const location = useLocation();
 
   useState(() => {
@@ -57,6 +58,7 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
+      {isPastDue && <PaymentFailedLockdown subscription={pastDueSubscription} />}
       {showOnboarding && (
         <OnboardingWizard user={currentUser} onComplete={() => setShowOnboarding(false)} />
       )}

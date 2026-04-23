@@ -41,11 +41,15 @@ export function useSubscription() {
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [pastDueSubscription, setPastDueSubscription] = useState(null);
+
   useEffect(() => {
-    base44.entities.Subscription.list("-created_date", 1)
+    base44.entities.Subscription.list("-created_date", 5)
       .then((subs) => {
         const active = subs.find((s) => s.status === "active");
+        const pastDue = subs.find((s) => s.status === "past_due");
         setSubscription(active || null);
+        setPastDueSubscription(active ? null : (pastDue || null));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -73,5 +77,7 @@ export function useSubscription() {
     hasFeature,
     meetsMinPlan,
     isEvaluation: plan === "evaluation",
+    isPastDue: !!pastDueSubscription,
+    pastDueSubscription,
   };
 }

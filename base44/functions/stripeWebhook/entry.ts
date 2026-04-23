@@ -103,6 +103,21 @@ Deno.serve(async (req) => {
 
     else if (event.type === 'invoice.paid') {
       const invoice = event.data.object;
+      const subId = invoice.subscription;
+
+      // Restore subscription to active (handles past_due recovery)
+      if (subId) {
+        const existing = await base44.asServiceRole.entities.Subscription.filter(
+          { stripe_subscription_id: subId }, undefined, 1
+        );
+        if (existing.length > 0 && existing[0].status !== 'active') {
+          await base44.asServiceRole.entities.Subscription.update(existing[0].id, {
+            status: 'active',
+          });
+          console.log(`Restored subscription ${subId} to active after successful payment`);
+        }
+      }
+
       const customerEmail = invoice.customer_email;
       const amountPaid = (invoice.amount_paid / 100).toFixed(2);
       const currency = invoice.currency.toUpperCase();
